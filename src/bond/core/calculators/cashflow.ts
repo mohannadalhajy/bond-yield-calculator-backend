@@ -1,17 +1,9 @@
 import { ApiProperty } from "@nestjs/swagger";
+import { CashFlowRowDto } from "src/bond/dto/cash-flow-row.dto";
 
 export enum CashFlowItemTypeEnum {
   COUPON = 'COUPON',
   PRINCIPAL = 'PRINCIPAL'
-}
-
-export class CashFlowItem {
-  @ApiProperty({ type: Date, example: '2025-01-01' })
-  paymentDate: string;
-  @ApiProperty({ type: Number, example: 50 })
-  amount: number;
-  @ApiProperty({ enum: CashFlowItemTypeEnum, example: CashFlowItemTypeEnum.COUPON })
-  type: CashFlowItemTypeEnum;
 }
 
 export enum CouponFrequencyEnum {
@@ -29,49 +21,6 @@ function addMonths(date: Date, months: number): Date {
 }
 
 /**
- * Generate cash flow schedule for a bond
- */
-export function generateCashFlowSchedule(
-  faceValue: number,
-  annualCouponRatePercent: number,
-  yearsToMaturity: number,
-  couponFrequency: CouponFrequencyEnum,
-  startDate?: string
-): CashFlowItem[] {
-  const cashFlows: CashFlowItem[] = [];
-  const couponPayment = (faceValue * annualCouponRatePercent) / 100;
-  const paymentsPerYear = couponFrequency === CouponFrequencyEnum.SEMI_ANNUAL ? 2 : 1;
-  const couponPaymentPerPeriod = couponPayment / paymentsPerYear;
-  const totalPayments = yearsToMaturity * paymentsPerYear;
-  
-  const start = startDate ? new Date(startDate) : new Date();
-  
-  for (let i = 1; i <= totalPayments; i++) {
-    const paymentDate = addMonths(start, (12 / paymentsPerYear) * i);
-    
-    // Add coupon payment only if it's greater than 0
-    if (couponPaymentPerPeriod > 0) {
-      cashFlows.push({
-        paymentDate: paymentDate.toISOString().split('T')[0],
-        amount: couponPaymentPerPeriod,
-        type: CashFlowItemTypeEnum.COUPON
-      });
-    }
-    
-    // Add principal payment at maturity
-    if (i === totalPayments) {
-      cashFlows.push({
-        paymentDate: paymentDate.toISOString().split('T')[0],
-        amount: faceValue,
-        type: CashFlowItemTypeEnum.PRINCIPAL
-      });
-    }
-  }
-  
-  return cashFlows;
-}
-
-/**
  * Generate row-based cash flow schedule for API response
  */
 export function generateCashFlowRows(
@@ -80,13 +29,7 @@ export function generateCashFlowRows(
   yearsToMaturity: number,
   couponFrequency: CouponFrequencyEnum,
   startDate?: string
-): Array<{
-  period: number;
-  paymentDate: string;
-  couponPayment: number;
-  cumulativeInterest: number;
-  remainingPrincipal: number;
-}> {
+): CashFlowRowDto[] {
   const rows = [];
   const periodsPerYear = couponFrequency === CouponFrequencyEnum.ANNUAL ? 1 : 2;
   const totalPeriods = yearsToMaturity * periodsPerYear;
