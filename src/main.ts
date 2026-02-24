@@ -7,12 +7,7 @@ async function bootstrap() {
   const app = await NestFactory.create(AppModule);
   
   // Enable CORS for local frontend dev (Vite default port 5173)
-  app.enableCors({
-    origin: ['http://localhost:5173'],
-    methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Authorization'],
-    credentials: false,
-  });
+  app.enableCors();
   
   // Enable global validation pipe
   app.useGlobalPipes(
